@@ -1,0 +1,405 @@
+<html>
+<head><title>Proj2 Zach Reitz</title>
+<script type="text/javascript">
+//Web Minesweeper Game!
+//Programmed in Javascript and HTML
+
+//global variables
+		 var board = new Array(); //keeps track of mines (-1), empty tiles (0), and number tiles (1-8)
+		 var visib = new Array(); //keeps track of which tiles are covered (0), visible (1), or flagged (2)
+		 var time = 0;
+		 var flags = 0; //keeps track of number of flags placed
+		 var num_rows = 16;
+		 var num_cols = 16;
+		 var num_tiles = num_cols*num_rows;
+		 var num_mines = 40;
+		 var playable = 1; //if false game has ended and clicks do nothing
+		 var tile_size = 24;
+		 var timerOn = 0;
+		 
+		 function newGame()
+		 {
+		 var i;
+		    //initialize arrays
+		    for (i = 0; i < (num_tiles); i++)
+			{
+			 	board[i] = 0;
+				visib[i] = 0;
+				document.images[i].src = "http://mulan.csufresno.edu/~twilson/csci130/imgs/tile.svg";
+			}
+			
+		  	//Placing mines
+			for(i = 0; i < num_mines; i++)
+			{
+				var mineIndex = Math.floor((Math.random()*num_tiles));
+				//find another spot if mine is already placed there
+				while(board[mineIndex] == -1)
+					mineIndex = Math.floor((Math.random()*num_tiles));
+				board[mineIndex]= -1;
+			}
+			//placing numbered tiles
+			
+			for(i = 0; i < num_tiles; i++)
+			{
+			 	var adj_mines = 0; //accumulates # of adj mines next to tile i
+				
+				//different cases for different positions on the board
+				//this is to avoid accessing a tile that is out of bounds
+				
+				var not_center = 0; //sets to 1 if any special case is met
+				
+				//case if ith tile is a mine. Do nothing
+				if (board[i] == -1) {continue;}
+				//case for top left corner. Corners have 3 possible adj mines
+				if (i == 0)
+				{
+				   if(board[i+1] == -1) adj_mines++;
+				   if(board[num_cols] == -1) adj_mines++;
+				   if(board[num_cols+1] == -1) adj_mines++;
+				   not_center = 1;
+				}
+				//case for top right corner
+				if (i == num_cols-1)
+				{
+				   if(board[i-1] == -1) adj_mines++;
+				   if(board[i+num_cols] == -1) adj_mines++;
+				   if(board[i+num_cols-1] == -1) adj_mines++;
+				   not_center = 1;
+				}
+				//case for bottom left corner
+				if (i == num_tiles - num_cols)
+				{
+				   if(board[i+1] == -1) adj_mines++;
+				   if(board[i-num_cols] == -1) adj_mines++;
+				   if(board[i-num_cols+1] == -1) adj_mines++;
+				   not_center = 1;
+				}
+				//case for bottom right corner
+				if (i == num_tiles -1)
+				{
+				   if(board[i-1] == -1) adj_mines++;
+				   if(board[i-num_cols] == -1) adj_mines++;
+				   if(board[i-num_cols-1] == -1) adj_mines++;
+				   not_center = 1;
+				}
+				//case for top edge. Edges have 5 possible adj mines
+				if (i > 0 && i < num_cols-1)
+				{
+				   if(board[i-1] == -1) adj_mines++;
+				   if(board[i+1] == -1) adj_mines++;
+				   if(board[i+num_cols-1] == -1) adj_mines++;
+				   if(board[i+num_cols] == -1) adj_mines++;
+				   if(board[i+num_cols+1] == -1) adj_mines++;
+				   not_center = 1;
+				}
+				//case for left edge
+				if (i%num_cols == 0 && i!=0 && i != (num_tiles - num_cols))
+				{
+				   if(board[i-num_cols] == -1) adj_mines++;
+				   if(board[i-num_cols+1] == -1) adj_mines++;
+				   if(board[i+1] == -1) adj_mines++;
+				   if(board[i+num_cols] == -1) adj_mines++;
+				   if(board[i+num_cols+1] == -1) adj_mines++;
+				   not_center = 1;
+				}
+				//case for right edge
+				if ((i+1)%num_cols == 0 && i != num_cols-1 && i != num_tiles-1)
+				{
+				   if(board[i-num_cols] == -1) adj_mines++; 
+				   if(board[i-num_cols-1] == -1) adj_mines++;
+				   if(board[i-1] == -1) adj_mines++;
+				   if(board[i+num_cols-1] == -1) adj_mines++;
+				   if(board[i+num_cols] == -1) adj_mines++;
+				   not_center = 1;
+				}
+				//case for bottom edge
+				if (i > num_tiles-num_rows &&  i < num_tiles-1)
+				{
+				   if(board[i-1] == -1) adj_mines++;
+				   if(board[i+1] == -1) adj_mines++;
+				   if(board[i-num_cols-1] == -1) adj_mines++;
+				   if(board[i-num_cols] == -1) adj_mines++;
+				   if(board[i-num_cols+1] == -1) adj_mines++;
+				   not_center = 1;
+				}
+				//case for center. 8 possible adj mines.*/
+				if (not_center == 0)
+				{
+				   if(board[i-num_cols-1] == -1) {adj_mines++;}
+				   if(board[i-num_cols] == -1) {adj_mines++;}
+				   if(board[i-num_cols+1] == -1) {adj_mines++;}
+				   if(board[i-1] == -1) {adj_mines++;}
+				   if(board[i+1] == -1) {adj_mines++;}
+				   if(board[i+num_cols-1] == -1) {adj_mines++;}
+				   if(board[i+num_cols] == -1) {adj_mines++;}
+				   if(board[i+num_cols+1] == -1) {adj_mines++;}
+				}
+				board[i] = adj_mines;
+			}//done placing numbered tiles
+			
+			//reset time and flag values
+			time = 0;
+			flags = 0;
+
+			//reset text fields
+			document.sweeper.timer.value = time;
+			document.sweeper.flags.value = flags+"/"+num_mines;
+			
+			//make game playable again
+			playable = 1;
+
+			Timer();
+		 }
+		 
+		 //need two functions here to make time consistant speed over multiple new games
+		 function Timer()
+		 {
+			if(!timerOn)
+			{
+				timerOn = 1;
+				startTimer();
+			}
+		 }
+
+		 function startTimer()
+		 {
+			document.sweeper.timer.value = time;
+			time++;
+			timer = setTimeout("startTimer()", 1000);
+		 }
+
+		 function leftClick(n)
+		{
+		    if(playable==1 && visib[n] == 0)
+			{
+				//If tile is blank, allow function to reveal adjacent tiles
+				if(board[n] == 0)
+				{
+					reveal(n);
+				}
+				//If tile contains a number, reveal only that tile
+				else if(board[n] >= 1 && board[n] <= 8)
+				{
+					document.images[n].src = "http://mulan.csufresno.edu/~twilson/csci130/imgs/"+board[n]+".svg";
+					visib[n] = 1;
+				}
+				//If tile is a bomb, end game
+				else if(board[n] == -1)
+				{
+			        defeat();
+				}
+			}
+		}
+		
+		function reveal(i)
+		{
+		//if location has a flag, game automatically removes the flag
+		if(visib[i] == 2)
+			{
+				flags--;
+				document.sweeper.flags.value = flags+"/"+num_mines;
+			}
+			visib[i] = 1;
+			document.images[i].src = "http://mulan.csufresno.edu/~twilson/csci130/imgs/"+board[i]+".svg";
+			if(!(typeof i=="number"))
+				i = parseInt(i);
+			if(board[i] == 0){
+			
+			//use same method in newGame function for placing images to reveal them
+				var not_center = 0;
+				//case for top left corner
+				if (i == 0)
+				{
+				   if(visib[i+1] != 1) reveal(i+1);
+				   if(visib[i+num_cols] != 1) reveal(i+num_cols);
+				   if(visib[i+num_cols+1] != 1) reveal(i+num_cols+1);
+				   not_center = 1;
+				}
+				//case for top right corner
+				if (i == num_cols-1)
+				{
+				   if(visib[i-1] != 1) reveal(i-1);
+				   if(visib[i+num_cols] != 1) reveal(i+num_cols);
+				   if(visib[i+num_cols-1] != 1) reveal(i+num_cols-1);
+				   not_center = 1;
+				}
+				//case for bottom left corner
+				if (i == num_tiles - num_cols)
+				{
+				   if(visib[i+1] != 1) reveal(i+1);
+				   if(visib[i-num_cols] != 1) reveal(i-num_cols);
+				   if(visib[i-num_cols+1] != 1) reveal(i-num_cols+1);
+				   not_center = 1;
+				}
+				//case for bottom right corner
+				if (i == num_tiles -1)
+				{
+				   if(visib[i-1] != 1) reveal(i-1);
+				   if(visib[i-num_cols] != 1) reveal(i-num_cols);
+				   if(visib[i-num_cols-1] != 1) reveal(i-num_cols-1);
+				   not_center = 1;
+				}
+				//case for top edge, excluding corners
+				if (i > 0 && i < num_cols-1)
+				{
+				   if(visib[i-1] != 1) reveal(i-1);
+				   if(visib[i+1] != 1) reveal(i+1);
+				   if(visib[i+num_cols-1] != 1) reveal(i+num_cols-1);
+				   if(visib[i+num_cols] != 1) reveal(i+num_cols);
+				   if(visib[i+num_cols+1] != 1) reveal(i+num_cols+1);
+				   not_center = 1;
+				}
+				//case for left edge
+				if (i%num_cols == 0 && i!=0 && i != (num_tiles - num_cols))
+				{
+				   if(visib[i-num_cols+1] != 1) reveal(i-num_cols+1);
+				   if(visib[i-num_cols] != 1) reveal(i-num_cols);
+				   if(visib[i+1] != 1) reveal(i+1);
+				   if(visib[i+num_cols+1] != 1) reveal(i+num_cols+1);
+				   if(visib[i+num_cols] != 1) reveal(i+num_cols);
+				   not_center = 1;
+				}
+				//case for right edge
+				if ((i+1)%num_cols == 0 && i !=num_cols-1 && i != num_tiles-1)
+				{
+				   if(visib[i-num_cols-1] != 1) reveal(i-num_cols-1);
+				   if(visib[i-num_cols] != 1) reveal(i-num_cols);
+				   if(visib[i-1] != 1) reveal(i-1);
+				   if(visib[i+num_cols-1] != 1) reveal(i+num_cols-1);
+				   if(visib[i+num_cols] != 1) reveal(i+num_cols);
+				   not_center = 1;
+				}
+				//case for bottom edge
+				if (i > num_tiles-num_rows &&  i < (num_tiles-1))
+				{
+				   if(visib[i-1] != 1) reveal(i-1);
+				   if(visib[i+1] != 1) reveal(i+1);
+				   if(visib[i-num_cols-1] != 1) reveal(i-num_cols-1);
+				   if(visib[i-num_cols] != 1) reveal(i-num_cols);
+				   if(visib[i-num_cols+1] != 1) reveal(i-num_cols+1);
+				   not_center = 1;
+				}
+				//case for center
+				if (not_center == 0)
+				{
+				   if(visib[i-num_cols-1] != 1) reveal(i-num_cols-1);
+				   if(visib[i-num_cols] != 1) reveal(i-num_cols);
+				   if(visib[i-num_cols+1] != 1) reveal(i-num_cols+1);
+				   if(visib[i-1] != 1) reveal(i-1);
+				   if(visib[i+1] != 1) reveal(i+1);
+				   if(visib[i+num_cols-1] != 1) reveal(i+num_cols-1);
+				   if(visib[i+num_cols] != 1) reveal(i+num_cols);
+				   if(visib[i+num_cols+1] != 1) reveal(i+num_cols+1);
+				}
+			}
+		}
+		function rightClick(n)
+		{
+			if(playable == 1)
+			{
+				if(visib[n] == 0)
+				{
+					if(flags < num_mines)
+					{
+						document.images[n].src = "http://mulan.csufresno.edu/~twilson/csci130/imgs/flag.svg";
+						visib[n] = 2;
+						flags++;
+						document.sweeper.flags.value = flags+"/"+num_mines;
+					}
+				}
+				else if(visib[n] == 2)
+				{
+					document.images[n].src = "http://mulan.csufresno.edu/~twilson/csci130/imgs/tile.svg";
+					visib[n] = 0;
+					flags--;
+					document.sweeper.flags.value = flags+"/"+num_mines;
+				}
+				//if last flag placed
+				if(flags == num_mines)
+				{
+					var winning = 1;
+					for(var i = 0; i < num_tiles; i++)
+					{
+						if(visib[i] == 2)//See if tile is flagged
+						{
+							if(board[i] != -1)//See if tile is not a mine
+								winning = 0;
+						}
+					}
+					if(winning == 1)
+					victory();
+				}
+			}
+		}
+		function victory()
+		{
+		    playable = 0;
+			clearTimeout(timer);
+			timerOn = 0;
+			for(var i = 0; i < num_tiles; i++)
+			{
+				if(visib[i] == 0)
+				{
+					document.images[i].src = "http://mulan.csufresno.edu/~twilson/csci130/imgs/"+board[i]+".svg";
+				}
+			}
+		   alert("You Won!");
+		}
+		
+		function defeat()
+		{
+		    playable = 0;
+			clearTimeout(timer);
+			timerOn = 0;
+			for(var i = 0; i < num_tiles; i++)
+			{
+				if(visib[i] == 2)
+				{
+					if(board[i] != -1)
+						document.images[i].src = "http://mulan.csufresno.edu/~twilson/csci130/imgs/xflag.svg";
+					continue;
+				}
+				switch(board[i])
+				{
+					case -1:
+						document.images[i].src = "http://mulan.csufresno.edu/~twilson/csci130/imgs/mine.svg";
+						break;
+					default:
+						document.images[i].src = "http://mulan.csufresno.edu/~twilson/csci130/imgs/"+board[i]+".svg";
+				}
+			}
+		}
+		
+</script>
+</head>
+	<body onload = "newGame();">
+	<div align = "center">
+	<h3>CSCI 130 Proj2 - Minesweeper Game!<h3><br>
+	<script type="text/javascript">
+	var index=0;
+	document.write('<table bgcolor="white">');
+	for(var i = 0; i < num_rows; i++)
+	{
+		document.write('<tr>');
+		for(var j = 0; j < num_cols; j++)
+		{
+			index = (i*num_cols)+j;
+			document.write('<td>');
+			document.write('<a HREF="" onContextMenu="rightClick(\'' + index + '\'); return false;" onclick="leftClick(\'' + index + '\'); return false;">');
+			document.write('<img src="http://mulan.csufresno.edu/~twilson/csci130/imgs/tile.svg" width="'+tile_size+'" height="'+tile_size+'"></a>');
+			document.write('</td>');
+		}
+		document.write('</tr>');
+	}
+	document.write('</table>');
+	</script>
+	<br><br>
+	<form name="sweeper">
+	<input type="button" value="New Game" onclick="newGame(); return false;">&nbsp; &nbsp; &nbsp; &nbsp;
+	Flags: <input type="text" name="flags" size="7" disabled="disabled"> &nbsp; &nbsp; &nbsp; &nbsp;
+	Timer: <input type="text" name="timer" size="7" disabled="disabled"> 
+	</form>
+	</div>
+<i>Created By Zachary Reitz 4/15/2012</i>
+</body>
+</html>
